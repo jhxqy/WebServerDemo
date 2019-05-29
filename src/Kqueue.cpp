@@ -7,12 +7,12 @@
 //
 
 #include "Kqueue.hpp"
-constexpr int maxEvent=10000;
 KqueueDispatcher::KqueueDispatcher(){
     kd_=kqueue();
     if(kd_==-1){
         throw std::runtime_error("create kqueue error");
     }
+    eventn_=0;
     
 }
 void KqueueDispatcher::add(Event e){
@@ -23,8 +23,8 @@ void KqueueDispatcher::remove(Event e){
 }
 
 int KqueueDispatcher::dispatch(struct timespec *t ){
-    std::vector<struct kevent> v(maxEvent);
-    while (!events_.empty()) {
+    while ((eventn_+=events_.size())) {
+        std::vector<struct kevent> v(eventn_);
         int n=0;
         for(auto i=events_.begin();i!=events_.end();i++,n++){
             if(i->type_==Event::Type::WRITE){
@@ -35,17 +35,8 @@ int KqueueDispatcher::dispatch(struct timespec *t ){
             v[n].udata=new decltype(i)(i);
             kevent(kd_, &v[n], 1, nullptr, 0, nullptr);
         }
-        int res=kevent(kd_, nullptr, 0, &v[0], maxEvent, t);
+        int res=kevent(kd_, nullptr, 0, &v[0], eventn_, t);
         for (int i=0;i<res;i++) {
-//            for(auto iter=events_.begin();iter!=events_.end();iter++){
-//                if (iter->fd_==v[i].ident) {
-//                    iter->func_(iter->fd_);
-//                    v[i].flags=EV_DELETE;
-//                    kevent(kd_, &v[i], 1,nullptr , 0,nullptr);
-//                    events_.erase(iter);
-//                    break;
-//                }
-//            }
             std::list<Event>::iterator *iter=static_cast<std::list<Event>::iterator*>(v[i].udata);
             (*iter)->func_((*iter)->fd_);
             events_.erase(*iter);
@@ -53,6 +44,7 @@ int KqueueDispatcher::dispatch(struct timespec *t ){
             v[i].flags=EV_DELETE;
             v[i].udata=nullptr;
             kevent(kd_, &v[i], 1,nullptr , 0,nullptr);
+            eventn_--;
         }
     }
     return 0;

@@ -14,6 +14,7 @@
 class KqueueDispatcher:public DispatcherBase{
     int kd_;
     std::list<Event> events_;
+    int eventn_;
 public:
     KqueueDispatcher();
     virtual void add(Event e) override;
