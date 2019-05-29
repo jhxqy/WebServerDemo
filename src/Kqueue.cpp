@@ -16,7 +16,7 @@ KqueueDispatcher::KqueueDispatcher(){
     
 }
 void KqueueDispatcher::add(Event e){
-    events_.push_back(e);
+    events_.push_front(e);
 }
 void KqueueDispatcher::remove(Event e){
   //  Event.remove(e);
@@ -35,8 +35,6 @@ int KqueueDispatcher::dispatch(struct timespec *t ){
             v[n].udata=new decltype(i)(i);
             kevent(kd_, &v[n], 1, nullptr, 0, nullptr);
         }
-        
-        
         int res=kevent(kd_, nullptr, 0, &v[0], maxEvent, t);
         for (int i=0;i<res;i++) {
 //            for(auto iter=events_.begin();iter!=events_.end();iter++){
