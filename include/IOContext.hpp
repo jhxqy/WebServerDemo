@@ -9,6 +9,7 @@
 #ifndef IOContext_hpp
 #define IOContext_hpp
 #include "Select.hpp"
+#include "Kqueue.hpp"
 #include "Socket.hpp"
 #include "Async.hpp"
 #include <stdio.h>

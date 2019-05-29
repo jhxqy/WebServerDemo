@@ -8,7 +8,7 @@
 
 #include "IOContext.hpp"
 #include <memory>
-IOContext::IOContext():dispatcher_(std::make_shared<SelectDispatcher>()){
+IOContext::IOContext():dispatcher_(std::make_shared<KqueueDispatcher>()){
     
 }
 void IOContext::add(Event e){

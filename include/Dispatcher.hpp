@@ -21,7 +21,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdio.h>
 struct Event{
     int fd_;
     enum Type{
@@ -33,6 +32,8 @@ struct Event{
 public:
     Event(int fd,Type t,std::function<void(int)> func):fd_(fd),type_(t),func_(func),finished(false){
     }
+public:
+    
 };
 
 class DispatcherBase{
