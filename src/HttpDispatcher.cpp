@@ -47,7 +47,12 @@ ResponseBody HttpDispatcherImpl::dispatch(const RequestBody &request){
         map_[request.url_](request,response);
         return response;
     }else{
-        //默认情况
+        
         return response;
     }
 }
+
+void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
+    this->defaultPath_=url;
+}
+

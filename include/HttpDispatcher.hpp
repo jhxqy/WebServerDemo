@@ -18,7 +18,6 @@ struct RequestBody{
     std::string url_;
     std::map<std::string,std::string> cookies_;
     std::string userAgent_;
-    
 };
 struct ResponseBody{
     int status;
@@ -33,20 +32,27 @@ struct ResponseBody{
         snprintf(buf, 2048, std::forward<Args>(rest)...);
         body_+=buf;
     }
+    ResponseBody(){
+        status=200;
+        otherHeaders_["Content-Type"]="text/html";
+    }
 };
 
 
 class HttpDispatcher{
 public:
-    virtual int Register(const std::string& url,std::function<void(RequestBody,ResponseBody&)> )=0;
+    using CallBackType=std::function<void(const RequestBody&,ResponseBody&)>;
+    virtual int Register(const std::string& url,CallBackType )=0;
     virtual ResponseBody dispatch(const RequestBody &request)=0;
+    virtual void SetDefaultPath(const std::string &url)=0;
     virtual ~HttpDispatcher(){}
+    
 };
 
 class HttpDispatcherImpl:public HttpDispatcher{
     HttpDispatcherImpl(){}
-    using CallBackType=std::function<void(RequestBody,ResponseBody&)>;
     std::unordered_map<std::string, CallBackType> map_;
+    std::string defaultPath_;
 public:
     static HttpDispatcher* Create(){
         static HttpDispatcherImpl *Singleton=nullptr;
@@ -55,6 +61,7 @@ public:
         }
         return Singleton;
     }
+    void SetDefaultPath(const std::string&url) override;
     ResponseBody dispatch(const RequestBody &request) override;
     int Register(const std::string &url,CallBackType) override;
     ~HttpDispatcherImpl(){}
