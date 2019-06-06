@@ -1,2 +1,3 @@
-# EasyAsync
-学习用的一个简单异步io框架
+# Async-HTTP
+
+一个基于EzAsync的简单Web服务器框架demo
