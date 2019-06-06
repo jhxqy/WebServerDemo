@@ -8,65 +8,22 @@
 
 #include <iostream>
 #include "Async.hpp"
+#include "http_parser.h"
 using namespace std;
-class Session:public enable_shared_from_this<Session>{
-    IOContext &ctx_;
-    Descriptor descriptor_;
-    size_t needSend;
-    char buf[1024];
-    void doRead(){
-        auto self=shared_from_this();
-        descriptor_.AsyncWaitRead([this,self](int fd){
-            needSend=read(fd, buf, 1024);
-            buf[needSend]=0;
-            cout<<buf;
-            if(needSend!=0){
-                self->doWrite();
-            }else{
-                cout<<"用户退出"<<endl;
-            }
-        });
-    }
-    void doWrite(){
-        auto self=shared_from_this();
-        descriptor_.AsyncWaitWrite([this,self](int fd){
-            size_t st=write(fd, buf, needSend);
-            if(st!=0){
-                needSend-=st;
-                if(needSend>0){
-                    doWrite();
-                }else{
-                    doRead();
-                }
-            }
-        });
-    }
-public:
-    void run(){
-        doRead();
-    }
-    Session(IOContext &ctx,int fd):ctx_(ctx),descriptor_(ctx,fd){
-    }
-};
-
-class Serv{
-    IOContext &ctx_;
-    Acceptor a;
-    void listen(){
-        a.AsyncWaitAccept([this](int fd){
-            int socket= accept(fd, nullptr, nullptr);
-            cout<<"有用户进入了"<<endl;
-            make_shared<Session>(ctx_,socket)->run();
-            this->listen();
-        });
-    }
-public:
-    Serv(IOContext &ctx,const char * serv):ctx_(ctx),a(ctx,nullptr,serv){
-        listen();
-    }
-};
 int main(){
-    IOContext ctx;
-    Serv s(ctx,"9998");
-    ctx.run();
+    http_parser *pa=static_cast<http_parser*>(malloc(sizeof(http_parser)));
+    http_parser_init(pa, HTTP_REQUEST);
+    char buf[]="GET /2016121034000012.png HTTP/1.1\r\nHost: admin.omsg.cn\r\nAccept: */*\r";
+    char buf2[]="\nConnection: Keep-Alive\r\n\r\n";
+    http_parser_settings s;
+//    s.on_body=[](http_parser*, const char *at, size_t length){
+//        return 0;
+//    };
+    memset(&s,0 , sizeof(s));
+    size_t n=http_parser_execute(pa, &s, buf, sizeof(buf)-1);
+    cout<<n<<endl;
+    cout<<sizeof(buf)-1<<endl;
+    n=http_parser_execute(pa, &s, buf2, sizeof(buf2)-1);
+    cout<<n<<endl;
+    cout<<sizeof(buf2)-1<<endl;
 }

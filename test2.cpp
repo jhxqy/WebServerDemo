@@ -12,36 +12,60 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <vector>
 #include <iostream>
 #include <map>
 #include "include/Async.hpp"
 using namespace std;
+struct RequestBody{
+    std::string url_;
+    std::map<string,string> cookies_;
+    std::string userAgent_;
+    
+};
+
 class Session:public enable_shared_from_this<Session>{
     IOContext &ctx_;
     Descriptor descriptor_;
     http_parser_settings settings;
     http_parser *parser;
-    size_t readfromclient;
-    std::map<string, string> cookies;
-    char buf[8192];
-    
-    int onbody(http_parser*, const char *at, size_t length){return 0;}
+    size_t hasRead=0;
+    RequestBody requestbody_;
+    size_t hasWrite=0;
+    std::vector<char> buf;
+    int onbody(http_parser*, const char *at, size_t length){
+        
+        return 0;
+        
+    }
     int onurl(http_parser*, const char *at, size_t length){
-        cout<<string(at,length)<<endl;
-        return 0;}
-
+        requestbody_.url_=std::string(at,length);
+        return 0;
+        
+    }
+    int onCookies(http_parser*,const char *at,size_t length){
+        
+        return 0;
+    }
     void doRead(){
         auto self=shared_from_this();
         descriptor_.AsyncWaitRead([this,self](int fd){
-            readfromclient+=read(fd,buf,8192);
-            if(readfromclient<=0){
-                return;
+            size_t readsize=read(fd,&buf[hasRead],buf.capacity());
+            if(readsize<=0){
+                return ;
             }
-            size_t hasParsered=http_parser_execute(parser, &settings, buf, readfromclient);
-            if(hasParsered!=readfromclient){
+            hasRead+=readsize;
+            if (readsize==buf.capacity()) {
+                buf.resize(buf.capacity()*2);
                 doRead();
             }else{
-                doWrite();
+                size_t hasParsered=http_parser_execute(parser, &settings, &buf[0], hasRead);
+                if(hasParsered!=hasRead){
+                    doRead();
+                }else{
+                    cout<<requestbody_.url_<<endl;
+                    doWrite();
+                }
             }
         });
     }
@@ -57,10 +81,16 @@ public:
     void run(){
         doRead();
     }
-    Session(IOContext &ctx,int fd):ctx_(ctx),descriptor_(ctx,fd),readfromclient(0){
+    Session(IOContext &ctx,int fd):ctx_(ctx),descriptor_(ctx,fd),buf(2048){
         parser=(http_parser*)malloc(sizeof(http_parser));
         http_parser_init(parser,HTTP_REQUEST);
+        memset(&settings,0,sizeof(settings));
         settings.on_url=bind(&Session::onurl, this,placeholders::_1,placeholders::_2,placeholders::_3);
+        settings.on_body=bind(&Session::onbody, this,placeholders::_1,placeholders::_2,placeholders::_3);
+    }
+    ~Session(){
+        cout<<"链接已断开"<<endl;
+        close(descriptor_.NativeFd());
     }
 };
 

@@ -33,6 +33,9 @@ public:
     }
     void AsyncWaitRead(std::function<void(int)>);
     void AsyncWaitWrite(std::function<void(int)>);
+    int NativeFd(){
+        return nativeFd_;
+    }
     ~Descriptor(){
     };
 };
