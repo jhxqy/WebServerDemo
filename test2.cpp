@@ -16,13 +16,9 @@
 #include <iostream>
 #include <map>
 #include "include/Async.hpp"
+#include "include/HttpDispatcher.hpp"
 using namespace std;
-struct RequestBody{
-    std::string url_;
-    std::map<string,string> cookies_;
-    std::string userAgent_;
-    
-};
+
 
 class Session:public enable_shared_from_this<Session>{
     IOContext &ctx_;
