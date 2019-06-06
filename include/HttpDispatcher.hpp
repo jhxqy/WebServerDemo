@@ -26,8 +26,12 @@ struct ResponseBody{
     std::map<std::string,std::string> otherHeaders_;
     std::string body_;
     std::string packet_;
-    std::string getPacket(){
-        return packet_;
+    std::string getPacket();
+    template<typename...Args>
+    void out(Args&&...rest){
+        char buf[2048]; //此处一次添加最多2048个字节
+        snprintf(buf, 2048, std::forward<Args>(rest)...);
+        body_+=buf;
     }
 };
 
@@ -44,7 +48,7 @@ class HttpDispatcherImpl:public HttpDispatcher{
     using CallBackType=std::function<void(RequestBody,ResponseBody&)>;
     std::unordered_map<std::string, CallBackType> map_;
 public:
-    HttpDispatcher* Create(){
+    static HttpDispatcher* Create(){
         static HttpDispatcherImpl *Singleton=nullptr;
         if(Singleton==nullptr){
             Singleton=new HttpDispatcherImpl();

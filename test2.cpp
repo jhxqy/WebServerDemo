@@ -29,10 +29,9 @@ class Session:public enable_shared_from_this<Session>{
     RequestBody requestbody_;
     size_t hasWrite=0;
     std::vector<char> buf;
+    string responsePacket_;
     int onbody(http_parser*, const char *at, size_t length){
-        
         return 0;
-        
     }
     int onurl(http_parser*, const char *at, size_t length){
         requestbody_.url_=std::string(at,length);
@@ -68,9 +67,20 @@ class Session:public enable_shared_from_this<Session>{
     void doWrite(){
         auto self=shared_from_this();
         descriptor_.AsyncWaitWrite([self,this](int fd){
-            char responsebody[]="HTTP/1.1 200 OK\r\nServer: Tiny Web\r\nConnection: close\r\nContent-type: text/plain\r\nContent-Length: 10\r\n\r\nhelloworld";
-            write(fd, responsebody, sizeof(responsebody)-1);
-            
+            if(hasWrite==0){
+                HttpDispatcher *dispatcher=HttpDispatcherImpl::Create();
+                ResponseBody response= dispatcher->dispatch(requestbody_);
+                responsePacket_=response.getPacket();
+                
+            }
+            size_t s= write(fd, &responsePacket_[hasWrite], responsePacket_.size()-hasWrite);
+            if (s<=0) {
+                return;
+            }
+            hasWrite+=s;
+            if (hasWrite<responsePacket_.size()) {
+                doWrite();
+            }
         });
     };
 public:
@@ -109,5 +119,16 @@ public:
 int main(){
     IOContext ctx;
     Serv s(ctx,"9998");
+    HttpDispatcherImpl::Create()->Register("/hello", [](RequestBody request,ResponseBody &response){
+        response.status=0;
+        response.otherHeaders_["Content-Type"]="text/html";
+        response.out("hello Nice my HTTP!");
+    });
+    
+    HttpDispatcherImpl::Create()->Register("/world", [](RequestBody request,ResponseBody &response){
+        response.status=0;
+        response.otherHeaders_["Content-Type"]="text/html";
+        response.out("are you ok?");
+    });
     ctx.run();
 }

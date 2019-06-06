@@ -7,6 +7,31 @@
 //
 
 #include "HttpDispatcher.hpp"
+#include <sstream>
+
+std::string ResponseBody::getPacket(){
+    std::stringstream ss;
+    ss<<"HTTP/1.1 "<<status<<" OK\r\n";
+    if (cookies_.size()!=0) {
+        ss<<"Cookie:";
+        for(auto i=cookies_.begin();i!=cookies_.end();i++){
+            ss<<i->first<<"="<<i->second<<";";
+        }
+         ss<<"\r\n";
+    }
+   
+    for(auto i:otherHeaders_){
+        ss<<i.first<<": "<<i.second<<"\r\n";
+    }
+    ss<<"Content-Length: "<<body_.size()<<"\r\n";
+    ss<<"\r\n";
+    ss<<body_;
+    packet_=ss.str();
+    return packet_;
+}
+
+
+
 int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
     if (map_.count(url)==1) {
         map_[url]=func;
@@ -15,7 +40,6 @@ int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
     map_[url]=func;
     return 0;
 }
-
 
 ResponseBody HttpDispatcherImpl::dispatch(const RequestBody &request){
     ResponseBody response;
