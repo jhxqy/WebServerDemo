@@ -36,7 +36,25 @@ class Session:public std::enable_shared_from_this<Session>{
         return 0;
     }
     int onurl(http_parser*, const char *at, size_t length){
-        requestbody_.url_=std::string(at,length);
+        //requestbody_.url_=std::string(at,length);
+        size_t i=0;
+        size_t posP=length;
+        for(i=0;i<length;i++){
+            if(at[i]=='?'){
+                break;
+            }
+        }
+        if(i!=length)
+            posP=i;
+        requestbody_.url_=std::string(at,posP);
+        size_t posPoint=requestbody_.url_.rfind('.');
+        if (posPoint==std::string::npos) {
+            requestbody_.isFile=false;
+        }else{
+            requestbody_.isFile=true;
+        requestbody_.suffix=requestbody_.url_.substr(posPoint+1,requestbody_.url_.size());
+            
+        }
         return 0;
         
     }

@@ -18,6 +18,11 @@ struct RequestBody{
     std::string url_;
     std::map<std::string,std::string> cookies_;
     std::string userAgent_;
+    bool isFile;
+    std::string suffix;
+    RequestBody():isFile(false){
+        
+    }
 };
 
 struct ResponseBody{

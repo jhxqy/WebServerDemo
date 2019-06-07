@@ -43,13 +43,19 @@ int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
 
 ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request){
     ResponseBody response;
-    if (map_.count(request.url_)==1) {
-        map_[request.url_](request,response);
-        return response;
-    }else{
-        
-        return response;
+    if(request.isFile==false){
+        if (map_.count(request.url_)==1) {
+            map_[request.url_](request,response);
+            return response;
+        }else{
+            return response;
+        }
     }
+    //处理文件情况;
+    fromPath(request, response);
+    return response;
+    
+    
 }
 
 void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
@@ -57,6 +63,11 @@ void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
 }
 
 std::string HttpDispatcherImpl::getSuffix(std::string &s){
+    size_t pos=s.rfind('.');
+    if (pos==std::string::npos) {
+        return "";
+    }
+    return s.substr(pos+1,s.size());
 }
 
 void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
@@ -64,7 +75,7 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     if (defaultPath_.compare("")==0) {
         return;
     }
-    std::string suffix=getSuffix(request.url_);
+    std::string &suffix=request.suffix;
     //不存在后缀的情况，即打开的不是一个文件
     if (suffix=="") {
         return;
@@ -81,6 +92,9 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     }else if(suffix.compare("manifest")==0){
         response.otherHeaders_["Content-Type"]="text/cache-mainifset; charset=UTF-8";
     }else{
+        response.otherHeaders_["Content-Type"]="text/plain; charset=UTF-8";
     }
+    
+    
     
 }
