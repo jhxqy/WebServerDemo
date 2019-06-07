@@ -41,7 +41,7 @@ int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
     return 0;
 }
 
-ResponseBody HttpDispatcherImpl::dispatch(const RequestBody &request){
+ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request){
     ResponseBody response;
     if (map_.count(request.url_)==1) {
         map_[request.url_](request,response);
@@ -56,3 +56,31 @@ void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
     this->defaultPath_=url;
 }
 
+std::string HttpDispatcherImpl::getSuffix(std::string &s){
+}
+
+void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
+    //如果没有设置默认目录，则直接返回空文件
+    if (defaultPath_.compare("")==0) {
+        return;
+    }
+    std::string suffix=getSuffix(request.url_);
+    //不存在后缀的情况，即打开的不是一个文件
+    if (suffix=="") {
+        return;
+    }
+    if (suffix.compare("html")==0 ||suffix.compare("htm")==0) {
+        response.otherHeaders_["Content-Type"]="text/html;charset=UTF-8";
+        
+    }else if(suffix.compare("js")==0){
+        response.otherHeaders_["Content-Type"]="application/javascript;charset=UTF-8";
+    }else if(suffix.compare("css")==0){
+        response.otherHeaders_["Content-Type"]="text/css; charset=UTF-8";
+    }else if(suffix.compare("txt")==0){
+        response.otherHeaders_["Content-Type"]="text/plain; charset=UTF-8";
+    }else if(suffix.compare("manifest")==0){
+        response.otherHeaders_["Content-Type"]="text/cache-mainifset; charset=UTF-8";
+    }else{
+    }
+    
+}
