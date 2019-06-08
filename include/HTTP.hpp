@@ -32,40 +32,9 @@ class Session:public std::enable_shared_from_this<Session>{
     size_t hasWrite=0;
     std::vector<char> buf;
     std::string responsePacket_;
-    int onbody(http_parser*, const char *at, size_t length){
-        return 0;
-    }
-    int onurl(http_parser*, const char *at, size_t length){
-        //requestbody_.url_=std::string(at,length);
-        size_t i=0;
-        size_t posP=length;
-        for(i=0;i<length;i++){
-            if(at[i]=='?'){
-                break;
-            }
-        }
-        if(i!=length)
-            posP=i;
-        requestbody_.url_=std::string(at,posP);
-        size_t posPoint=requestbody_.url_.rfind('.');
-        if (posPoint==std::string::npos) {
-            requestbody_.isFile=false;
-        }else{
-            requestbody_.isFile=true;
-        requestbody_.suffix=requestbody_.url_.substr(posPoint,requestbody_.url_.size());
-        }
-        
-        /*
-         此处应该分析一波参数。
-         
-         */
-        return 0;
-        
-    }
-    int onCookies(http_parser*,const char *at,size_t length){
-        
-        return 0;
-    }
+    int onbody(http_parser*, const char *at, size_t length);
+    int onurl(http_parser*, const char *at, size_t length);
+    int onCookies(http_parser*,const char *at,size_t length);
     void doRead(){
         auto self=shared_from_this();
         descriptor_.AsyncWaitRead([this,self](int fd){
