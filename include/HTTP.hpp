@@ -52,9 +52,13 @@ class Session:public std::enable_shared_from_this<Session>{
             requestbody_.isFile=false;
         }else{
             requestbody_.isFile=true;
-        requestbody_.suffix=requestbody_.url_.substr(posPoint+1,requestbody_.url_.size());
-            
+        requestbody_.suffix=requestbody_.url_.substr(posPoint,requestbody_.url_.size());
         }
+        
+        /*
+         此处应该分析一波参数。
+         
+         */
         return 0;
         
     }

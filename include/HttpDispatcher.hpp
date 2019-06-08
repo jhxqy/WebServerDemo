@@ -13,6 +13,7 @@
 #include <map>
 #include <unordered_map>
 #include <string>
+#include "Content-Type-Acquisitor.hpp"
 #include <functional>
 struct RequestBody{
     std::string url_;
@@ -24,6 +25,9 @@ struct RequestBody{
         
     }
 };
+
+
+
 
 struct ResponseBody{
     int status;
@@ -56,13 +60,17 @@ public:
 };
 
 class HttpDispatcherImpl:public HttpDispatcher{
-    HttpDispatcherImpl(){}
+    HttpDispatcherImpl(){
+        
+    }
     std::unordered_map<std::string, CallBackType> map_;
     std::string defaultPath_;
-    std::string getSuffix(std::string &s);
     void fromPath(RequestBody &request,ResponseBody &response);
+    std::unordered_map<std::string, std::string> contentTypeTable_;
+    ContentTypeAscquisitor cta_;
+
 public:
-    static HttpDispatcher* Create(){
+    static HttpDispatcherImpl* Create(){
         static HttpDispatcherImpl *Singleton=nullptr;
         if(Singleton==nullptr){
             Singleton=new HttpDispatcherImpl();

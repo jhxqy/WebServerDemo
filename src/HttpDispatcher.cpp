@@ -8,7 +8,8 @@
 
 #include "HttpDispatcher.hpp"
 #include <sstream>
-
+#include <fstream>
+#include <iostream>
 std::string ResponseBody::getPacket(){
     std::stringstream ss;
     ss<<"HTTP/1.1 "<<status<<" OK\r\n";
@@ -31,7 +32,6 @@ std::string ResponseBody::getPacket(){
 }
 
 
-
 int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
     if (map_.count(url)==1) {
         map_[url]=func;
@@ -48,6 +48,7 @@ ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request){
             map_[request.url_](request,response);
             return response;
         }else{
+            
             return response;
         }
     }
@@ -62,13 +63,7 @@ void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
     this->defaultPath_=url;
 }
 
-std::string HttpDispatcherImpl::getSuffix(std::string &s){
-    size_t pos=s.rfind('.');
-    if (pos==std::string::npos) {
-        return "";
-    }
-    return s.substr(pos+1,s.size());
-}
+
 
 void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     //如果没有设置默认目录，则直接返回空文件
@@ -77,23 +72,20 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     }
     std::string &suffix=request.suffix;
     //不存在后缀的情况，即打开的不是一个文件
-    if (suffix=="") {
+    std::string type=cta_.get(suffix);
+    if (type=="") {
+        return ;
+    }
+    response.otherHeaders_["Content-Type"]=type;
+    std::ifstream in(defaultPath_+request.url_);
+    if (!in) {
         return;
     }
-    if (suffix.compare("html")==0 ||suffix.compare("htm")==0) {
-        response.otherHeaders_["Content-Type"]="text/html;charset=UTF-8";
-        
-    }else if(suffix.compare("js")==0){
-        response.otherHeaders_["Content-Type"]="application/javascript;charset=UTF-8";
-    }else if(suffix.compare("css")==0){
-        response.otherHeaders_["Content-Type"]="text/css; charset=UTF-8";
-    }else if(suffix.compare("txt")==0){
-        response.otherHeaders_["Content-Type"]="text/plain; charset=UTF-8";
-    }else if(suffix.compare("manifest")==0){
-        response.otherHeaders_["Content-Type"]="text/cache-mainifset; charset=UTF-8";
-    }else{
-        response.otherHeaders_["Content-Type"]="text/plain; charset=UTF-8";
-    }
+
+    
+    response.body_=std::string(std::istreambuf_iterator<char>(in),std::istreambuf_iterator<char>());
+    return;
+    
     
     
     

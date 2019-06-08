@@ -13,13 +13,15 @@ using namespace std;
 int main(){
     IOContext ctx;
     Serv s(ctx,"8088");
-    HttpDispatcherImpl::Create()->Register("/hello", [](RequestBody request,ResponseBody &response){
+    HttpDispatcher *http=HttpDispatcherImpl::Create();
+    http->SetDefaultPath("./web");
+    http->Register("/hello", [](RequestBody request,ResponseBody &response){
         response.status=200;
         response.otherHeaders_["Content-Type"]="text/html";
         response.out("hello Nice my HTTP!");
     });
     
-    HttpDispatcherImpl::Create()->Register("/world", [](RequestBody request,ResponseBody &response){
+    http->Register("/world", [](RequestBody request,ResponseBody &response){
         response.status=200;
         response.otherHeaders_["Content-Type"]="text/html";
         response.out("are you ok?");
