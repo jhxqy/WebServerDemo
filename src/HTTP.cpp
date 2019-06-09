@@ -7,14 +7,79 @@
 //
 
 #include "HTTP.hpp"
-int Session::onbody(http_parser *, const char *at, size_t length){
-    std::cout<<std::string(at,length)<<std::endl;
-    return 0;
+
+void Session::doRead(){
+    auto self=shared_from_this();
+    descriptor_.AsyncWaitRead([this,self](int fd){
+        size_t readsize=read(fd,&buf[hasRead],buf.capacity());
+        if(readsize<=0){
+            return ;
+        }
+        hasRead+=readsize;
+        if (readsize==buf.capacity()) {
+            buf.resize(buf.capacity()*2);
+            doRead();
+        }else{
+            size_t hasParsered=http_parser_execute(parser, &settings, &buf[0], hasRead);
+            if(hasParsered!=hasRead){
+                doRead();
+            }else{
+                std::cout<<requestbody_.url_<<std::endl;
+                doWrite();
+            }
+        }
+    });
 }
-int Session::onCookies(http_parser *, const char *at, size_t length){
-    return 0;
+void Session::doWrite(){
+    auto self=shared_from_this();
+    descriptor_.AsyncWaitWrite([self,this](int fd){
+        if(hasWrite==0){
+            HttpDispatcher *dispatcher=HttpDispatcherImpl::Create();
+            ResponseBody response= dispatcher->dispatch(requestbody_);
+            responsePacket_=response.getPacket();
+            
+        }
+        size_t s= write(fd, &responsePacket_[hasWrite], responsePacket_.size()-hasWrite);
+        if (s<=0) {
+            return;
+        }
+        hasWrite+=s;
+        if (hasWrite<responsePacket_.size()) {
+            doWrite();
+        }
+    });
 }
 
+int Session::onbody(http_parser *, const char *at, size_t length){
+  //  std::cout<<"body:"<<length<<std::endl;
+    return 0;
+}
+int Session::onheaders_field(http_parser *, const char *at, size_t length){
+    tempHeader.first=std::string(at,length);
+    return 0;
+}
+int Session::onheaders_value(http_parser *, const char *at, size_t length){
+    tempHeader.second=std::string(at,length);
+    if (tempHeader.first.compare("Cookie")==0) {
+        size_t lastfen=0;
+        std::string &a=tempHeader.second;
+        for (size_t i=0; i<=a.size();i++) {
+            if (i==(a.size())||a[i]==';') {
+                for(size_t j=lastfen;j<i;j++){
+                    if (a[j]=='=') {
+                        requestbody_.cookies_.insert(std::make_pair(std::string(&a[lastfen],j-lastfen), std::string(&a[j+1],i-j-1)));
+                        lastfen=i+1;
+                        break;
+                    }
+                }
+            }
+        }
+    }else{
+        requestbody_.headers_.insert(tempHeader);
+        
+    }
+    return 0;
+}
 int Session::onurl(http_parser *, const char * at,size_t length){
     //requestbody_.url_=std::string(at,length);
     size_t i=0;

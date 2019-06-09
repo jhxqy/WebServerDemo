@@ -24,10 +24,17 @@ int main(){
     http->Register("/world", [](RequestBody &request,ResponseBody &response){
         response.status=200;
         response.otherHeaders_["Content-Type"]="text/html";
-        response.out("are you ok?");
+        for(auto i:request.headers_){
+            response.out("%s:%s<br>",i.first.c_str(),i.second.c_str());
+        }
+        for(auto i:request.cookies_){
+            response.out("%s=%s<br>",i.first.c_str(),i.second.c_str());
+            
+        }
     });
     http->Register("/jump", [](RequestBody &request,ResponseBody &response){
         response.sendRedirect("/world");
+        
     });
     ctx.run();
 }

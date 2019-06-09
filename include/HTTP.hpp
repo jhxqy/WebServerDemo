@@ -32,50 +32,13 @@ class Session:public std::enable_shared_from_this<Session>{
     size_t hasWrite=0;
     std::vector<char> buf;
     std::string responsePacket_;
+    std::pair<std::string, std::string> tempHeader;
     int onbody(http_parser*, const char *at, size_t length);
     int onurl(http_parser*, const char *at, size_t length);
-    int onCookies(http_parser*,const char *at,size_t length);
-    void doRead(){
-        auto self=shared_from_this();
-        descriptor_.AsyncWaitRead([this,self](int fd){
-            size_t readsize=read(fd,&buf[hasRead],buf.capacity());
-            if(readsize<=0){
-                return ;
-            }
-            hasRead+=readsize;
-            if (readsize==buf.capacity()) {
-                buf.resize(buf.capacity()*2);
-                doRead();
-            }else{
-                size_t hasParsered=http_parser_execute(parser, &settings, &buf[0], hasRead);
-                if(hasParsered!=hasRead){
-                    doRead();
-                }else{
-                    std::cout<<requestbody_.url_<<std::endl;
-                    doWrite();
-                }
-            }
-        });
-    }
-    void doWrite(){
-        auto self=shared_from_this();
-        descriptor_.AsyncWaitWrite([self,this](int fd){
-            if(hasWrite==0){
-                HttpDispatcher *dispatcher=HttpDispatcherImpl::Create();
-                ResponseBody response= dispatcher->dispatch(requestbody_);
-                responsePacket_=response.getPacket();
-                
-            }
-            size_t s= write(fd, &responsePacket_[hasWrite], responsePacket_.size()-hasWrite);
-            if (s<=0) {
-                return;
-            }
-            hasWrite+=s;
-            if (hasWrite<responsePacket_.size()) {
-                doWrite();
-            }
-        });
-    };
+    int onheaders_field(http_parser*, const char *at, size_t length);
+    int onheaders_value(http_parser*, const char *at, size_t length);
+    void doRead();
+    void doWrite();
 public:
     void run(){
         doRead();
@@ -86,6 +49,9 @@ public:
         memset(&settings,0,sizeof(settings));
         settings.on_url=std::bind(&Session::onurl, this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
         settings.on_body=std::bind(&Session::onbody, this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+
+        settings.on_header_value=std::bind(&Session::onheaders_value,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+        settings.on_header_field=std::bind(&Session::onheaders_field,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
     }
     ~Session(){
         std::cout<<"链接已断开"<<std::endl;
