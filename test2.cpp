@@ -15,16 +15,19 @@ int main(){
     Serv s(ctx,"8088");
     HttpDispatcher *http=HttpDispatcherImpl::Create();
     http->SetDefaultPath("./web");
-    http->Register("/hello", [](RequestBody request,ResponseBody &response){
+    http->Register("/hello", [](RequestBody &request,ResponseBody &response){
         response.status=200;
         response.otherHeaders_["Content-Type"]="text/html";
         response.out("hello Nice my HTTP!");
     });
     
-    http->Register("/world", [](RequestBody request,ResponseBody &response){
+    http->Register("/world", [](RequestBody &request,ResponseBody &response){
         response.status=200;
         response.otherHeaders_["Content-Type"]="text/html";
         response.out("are you ok?");
+    });
+    http->Register("/jump", [](RequestBody &request,ResponseBody &response){
+        response.sendRedirect("/world");
     });
     ctx.run();
 }

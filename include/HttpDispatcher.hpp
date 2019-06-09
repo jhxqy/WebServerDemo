@@ -42,6 +42,10 @@ struct ResponseBody{
         snprintf(buf, 2048, std::forward<Args>(rest)...);
         body_+=buf;
     }
+    void sendRedirect(const std::string &newurl){
+        status=302;
+        otherHeaders_["Location"]=newurl;
+    }
     ResponseBody(){
         status=200;
         otherHeaders_["Content-Type"]="text/html";
