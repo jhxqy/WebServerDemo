@@ -139,8 +139,6 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     if (!in) {
         return;
     }
-
-    
     response.body_=std::string(std::istreambuf_iterator<char>(in),std::istreambuf_iterator<char>());
     return;
     

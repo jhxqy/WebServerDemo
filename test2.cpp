@@ -36,5 +36,8 @@ int main(){
         response.sendRedirect("/world");
         
     });
+    http->Register("/param", [](RequestBody &request,ResponseBody& response){
+        response.out("param:%s",request.parameters.c_str());
+    });
     ctx.run();
 }

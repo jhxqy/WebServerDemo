@@ -21,6 +21,7 @@ struct RequestBody{
     std::map<std::string,std::string> headers_;
     bool isFile;
     std::string suffix;
+    std::string parameters;
     RequestBody():isFile(false){
         
     }

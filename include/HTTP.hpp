@@ -37,6 +37,8 @@ class Session:public std::enable_shared_from_this<Session>{
     int onurl(http_parser*, const char *at, size_t length);
     int onheaders_field(http_parser*, const char *at, size_t length);
     int onheaders_value(http_parser*, const char *at, size_t length);
+    int onstatus(http_parser *, const char *at, size_t length);
+    void keepAliveInit();
     void doRead();
     void doWrite();
 public:
@@ -49,9 +51,10 @@ public:
         memset(&settings,0,sizeof(settings));
         settings.on_url=std::bind(&Session::onurl, this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
         settings.on_body=std::bind(&Session::onbody, this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
-
+        
         settings.on_header_value=std::bind(&Session::onheaders_value,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
         settings.on_header_field=std::bind(&Session::onheaders_field,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+        settings.on_status=std::bind(&Session::onstatus,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
     }
     ~Session(){
         std::cout<<"链接已断开"<<std::endl;

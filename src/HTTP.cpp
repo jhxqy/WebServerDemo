@@ -37,7 +37,6 @@ void Session::doWrite(){
             HttpDispatcher *dispatcher=HttpDispatcherImpl::Create();
             ResponseBody response= dispatcher->dispatch(requestbody_);
             responsePacket_=response.getPacket();
-            
         }
         size_t s= write(fd, &responsePacket_[hasWrite], responsePacket_.size()-hasWrite);
         if (s<=0) {
@@ -46,12 +45,21 @@ void Session::doWrite(){
         hasWrite+=s;
         if (hasWrite<responsePacket_.size()) {
             doWrite();
+        }else{
+//            if (requestbody_.headers_["Connection"].compare("keep-alive")==0) {
+//                this->keepAliveInit();
+//                doRead();
+//            }
         }
+        
     });
 }
 
 int Session::onbody(http_parser *, const char *at, size_t length){
-  //  std::cout<<"body:"<<length<<std::endl;
+    requestbody_.parameters=std::string(at,length);
+    return 0;
+}
+int Session::onstatus(http_parser *, const char *at, size_t length){
     return 0;
 }
 int Session::onheaders_field(http_parser *, const char *at, size_t length){
@@ -104,5 +112,19 @@ int Session::onurl(http_parser *, const char * at,size_t length){
      此处应该分析一波参数。
      
      */
+    if (posP!=length) {
+        requestbody_.parameters=std::string(&at[posP+1],length-posP);
+    }
     return 0;
+}
+
+
+void Session::keepAliveInit(){
+    http_parser_init(parser, HTTP_REQUEST);
+    responsePacket_.clear();
+    buf.clear();
+    hasRead=0;
+    hasWrite=0;
+    requestbody_=RequestBody();
+    
 }
