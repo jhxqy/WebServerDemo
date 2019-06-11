@@ -15,7 +15,9 @@
 #include <string>
 #include "Content-Type-Acquisitor.hpp"
 #include <functional>
+class HttpDispatcher;
 struct RequestBody{
+    std::string nativeURL_;
     std::string url_;
     std::map<std::string,std::string> cookies_;
     std::map<std::string,std::string> headers_;
@@ -37,6 +39,7 @@ struct ResponseBody{
     std::string body_;
     std::string packet_;
     std::string getPacket();
+    HttpDispatcher &httpDispatcher_;
     template<typename...Args>
     void out(Args&&...rest){
         char buf[2048]; //此处一次添加最多2048个字节
@@ -47,10 +50,11 @@ struct ResponseBody{
         status=302;
         otherHeaders_["Location"]=newurl;
     }
-    ResponseBody(){
+    ResponseBody(HttpDispatcher &dispatcher):httpDispatcher_(dispatcher){ 
         status=200;
-        otherHeaders_["Content-Type"]="text/html";
+        otherHeaders_["Content-Type"]="text/html;charset=utf-8";
     }
+    void forward(RequestBody &request,const std::string &url);
 };
 
 
@@ -58,7 +62,7 @@ class HttpDispatcher{
 public:
     using CallBackType=std::function<void(RequestBody&,ResponseBody&)>;
     virtual int Register(const std::string& url,CallBackType )=0;
-    virtual ResponseBody dispatch(RequestBody &request)=0;
+    virtual ResponseBody dispatch(RequestBody &request,ResponseBody &response)=0;
     virtual void SetDefaultPath(const std::string &url)=0;
     virtual ~HttpDispatcher(){}
     
@@ -73,7 +77,7 @@ class HttpDispatcherImpl:public HttpDispatcher{
     void fromPath(RequestBody &request,ResponseBody &response);
     std::unordered_map<std::string, std::string> contentTypeTable_;
     ContentTypeAscquisitor cta_;
-
+    void parserUrl(RequestBody &request);
 public:
     static HttpDispatcherImpl* Create(){
         static HttpDispatcherImpl *Singleton=nullptr;
@@ -83,7 +87,7 @@ public:
         return Singleton;
     }
     void SetDefaultPath(const std::string&url) override;
-    ResponseBody dispatch(RequestBody &request) override;
+    ResponseBody dispatch(RequestBody &request,ResponseBody &response) override;
     int Register(const std::string &url,CallBackType) override;
     ~HttpDispatcherImpl(){}
     

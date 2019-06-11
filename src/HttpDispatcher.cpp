@@ -67,7 +67,10 @@ std::string StatusMessage(int status){
     }
 
 }
-
+void ResponseBody::forward(RequestBody &request,const std::string &url){
+    request.nativeURL_=url;
+    httpDispatcher_.dispatch(request, *this);
+}
 std::string ResponseBody::getPacket(){
     std::stringstream ss;
     ss<<"HTTP/1.1 "<<status<<" "<<StatusMessage(status)<<"\r\n";
@@ -98,21 +101,48 @@ int HttpDispatcherImpl::Register(const std::string &url, CallBackType func){
     map_[url]=func;
     return 0;
 }
+void HttpDispatcherImpl::parserUrl(RequestBody &request){
+    size_t length=request.nativeURL_.size();
+    char *at=&request.nativeURL_[0];
+    size_t i=0;
+    size_t posP=length;
+    for(i=0;i<length;i++){
+        if(at[i]=='?'){
+            break;
+        }
+    }
+    if(i!=length)
+        posP=i;
+    request.url_=std::string(at,posP);
+    size_t posPoint=request.url_.rfind('.');
+    if (posPoint==std::string::npos) {
+        request.isFile=false;
+    }else{
+        request.isFile=true;
+        request.suffix=request.url_.substr(posPoint,request.url_.size());
+    }
+    
+    if (posP!=length) {
+        request.parameters=std::string(&at[posP+1],length-posP);
+    }
+}
 
-ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request){
-    ResponseBody response;
+
+ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request,ResponseBody &response){
+   // ResponseBody response(*this);
+    parserUrl(request);
     if(request.isFile==false){
         if (map_.count(request.url_)==1) {
+//            response.otherHeaders_["Content-Type"]="text/html;charset=utf-8";
             map_[request.url_](request,response);
             return response;
         }else{
-            
             return response;
         }
     }
     //处理文件情况;
     fromPath(request, response);
-    return response;
+    return response; 
     
     
 }
@@ -134,6 +164,7 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     if (type=="") {
         return ;
     }
+    
     response.otherHeaders_["Content-Type"]=type;
     std::ifstream in(defaultPath_+request.url_);
     if (!in) {

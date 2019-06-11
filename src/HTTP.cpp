@@ -24,7 +24,7 @@ void Session::doRead(){
             if(hasParsered!=hasRead){
                 doRead();
             }else{
-                std::cout<<requestbody_.url_<<std::endl;
+                std::cout<<requestbody_.nativeURL_<<std::endl;
                 doWrite();
             }
         }
@@ -35,7 +35,9 @@ void Session::doWrite(){
     descriptor_.AsyncWaitWrite([self,this](int fd){
         if(hasWrite==0){
             HttpDispatcher *dispatcher=HttpDispatcherImpl::Create();
-            ResponseBody response= dispatcher->dispatch(requestbody_);
+            
+            ResponseBody response(*dispatcher);
+            dispatcher->dispatch(requestbody_,response);
             responsePacket_=response.getPacket();
         }
         size_t s= write(fd, &responsePacket_[hasWrite], responsePacket_.size()-hasWrite);
@@ -89,32 +91,29 @@ int Session::onheaders_value(http_parser *, const char *at, size_t length){
     return 0;
 }
 int Session::onurl(http_parser *, const char * at,size_t length){
+    requestbody_.nativeURL_=std::string(at,length);
     //requestbody_.url_=std::string(at,length);
-    size_t i=0;
-    size_t posP=length;
-    for(i=0;i<length;i++){
-        if(at[i]=='?'){
-            break;
-        }
-    }
-    if(i!=length)
-        posP=i;
-    requestbody_.url_=std::string(at,posP);
-    size_t posPoint=requestbody_.url_.rfind('.');
-    if (posPoint==std::string::npos) {
-        requestbody_.isFile=false;
-    }else{
-        requestbody_.isFile=true;
-        requestbody_.suffix=requestbody_.url_.substr(posPoint,requestbody_.url_.size());
-    }
-    
-    /*
-     此处应该分析一波参数。
-     
-     */
-    if (posP!=length) {
-        requestbody_.parameters=std::string(&at[posP+1],length-posP);
-    }
+//    size_t i=0;
+//    size_t posP=length;
+//    for(i=0;i<length;i++){
+//        if(at[i]=='?'){
+//            break;
+//        }
+//    }
+//    if(i!=length)
+//        posP=i;
+//    requestbody_.url_=std::string(at,posP);
+//    size_t posPoint=requestbody_.url_.rfind('.');
+//    if (posPoint==std::string::npos) {
+//        requestbody_.isFile=false;
+//    }else{
+//        requestbody_.isFile=true;
+//        requestbody_.suffix=requestbody_.url_.substr(posPoint,requestbody_.url_.size());
+//    }
+//    
+//    if (posP!=length) {
+//        requestbody_.parameters=std::string(&at[posP+1],length-posP);
+//    }
     return 0;
 }
 
