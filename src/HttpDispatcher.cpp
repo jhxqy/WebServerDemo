@@ -75,7 +75,7 @@ namespace HTTP{
         std::stringstream ss;
         ss<<"HTTP/1.1 "<<status<<" "<<StatusMessage(status)<<"\r\n";
         if (cookies_.size()!=0) {
-            ss<<"Cookie:";
+            ss<<"Set-Cookie:";
             for(auto i=cookies_.begin();i!=cookies_.end();i++){
                 ss<<i->first<<"="<<i->second<<";";
             }
