@@ -8,13 +8,16 @@
 
 #include "IOContext.hpp"
 #include <memory>
-IOContext::IOContext():dispatcher_(std::make_shared<KqueueDispatcher>()){
+namespace HTTP {
+    IOContext::IOContext():dispatcher_(std::make_shared<KqueueDispatcher>()){
+        
+    }
+    void IOContext::add(Event e){
+        dispatcher_->add(e);
+    }
+    void IOContext::run(){
+        dispatcher_->dispatch(nullptr);
+    }
     
-}
-void IOContext::add(Event e){
-    dispatcher_->add(e);
-}
-void IOContext::run(){
-    dispatcher_->dispatch(nullptr);
-}
 
+}

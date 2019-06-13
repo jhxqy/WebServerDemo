@@ -10,14 +10,18 @@
 #define Select_hpp
 #include "Dispatcher.hpp"
 
-class SelectDispatcher:public DispatcherBase{
-    
-    std::list<Event> events_;
-public:
-    SelectDispatcher();
-    virtual void add(Event e) override;
-    virtual void remove(Event e) override;
-    virtual int dispatch(struct timespec *) override;
-    virtual ~SelectDispatcher();
-};
+namespace HTTP {
+    class SelectDispatcher:public DispatcherBase{
+        
+        std::list<Event> events_;
+    public:
+        SelectDispatcher();
+        virtual void add(Event e) override;
+        virtual void remove(Event e) override;
+        virtual int dispatch(struct timespec *) override;
+        virtual ~SelectDispatcher();
+    };
+}
+
+
 #endif /* Select_hpp */

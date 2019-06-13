@@ -12,17 +12,20 @@
 #include <stdio.h>
 #include <string>
 #include <unordered_map>
-class ContentTypeAscquisitor{
-    std::unordered_map<std::string, std::string> map_;
-public:
-    ContentTypeAscquisitor();
-    std::string get(const std::string &suffix){
-        if(map_.count(suffix)!=0){
-            return map_[suffix];
-        }else{
-            return "";
+namespace HTTP{
+    class ContentTypeAscquisitor{
+        std::unordered_map<std::string, std::string> map_;
+    public:
+        ContentTypeAscquisitor();
+        std::string get(const std::string &suffix){
+            if(map_.count(suffix)!=0){
+                return map_[suffix];
+            }else{
+                return "";
+            }
         }
-    }
-};
+    };
+}
+
 
 #endif /* Content_Type_Acquisitor_hpp */

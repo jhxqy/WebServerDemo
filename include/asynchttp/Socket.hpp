@@ -13,30 +13,34 @@
 #include <functional>
 
 #include <unistd.h>
-class IOContext;
-class Acceptor{
-    IOContext &ctx_;
-    int nativeFd_;
-public:
-    ~Acceptor(){
-        close(nativeFd_);
-    }
-    explicit Acceptor(IOContext &ctx,const char *host,const char *serv);
-    void AsyncWaitAccept(std::function<void(int)>);
-};
 
-class Descriptor{
-    int nativeFd_;
-    IOContext &ctx_;
-public:
-    explicit Descriptor(IOContext &ctx,int fd):nativeFd_(fd),ctx_(ctx){
-    }
-    void AsyncWaitRead(std::function<void(int)>);
-    void AsyncWaitWrite(std::function<void(int)>);
-    int NativeFd(){
-        return nativeFd_;
-    }
-    ~Descriptor(){
+namespace HTTP {
+    class IOContext;
+    class Acceptor{
+        IOContext &ctx_;
+        int nativeFd_;
+    public:
+        ~Acceptor(){
+            close(nativeFd_);
+        }
+        explicit Acceptor(IOContext &ctx,const char *host,const char *serv);
+        void AsyncWaitAccept(std::function<void(int)>);
     };
-};
+    
+    class Descriptor{
+        int nativeFd_;
+        IOContext &ctx_;
+    public:
+        explicit Descriptor(IOContext &ctx,int fd):nativeFd_(fd),ctx_(ctx){
+        }
+        void AsyncWaitRead(std::function<void(int)>);
+        void AsyncWaitWrite(std::function<void(int)>);
+        int NativeFd(){
+            return nativeFd_;
+        }
+        ~Descriptor(){
+        };
+    };
+}
+
 #endif /* Socket_hpp */

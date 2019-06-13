@@ -13,11 +13,14 @@
 #include "Socket.hpp"
 #include "Async.hpp"
 #include <stdio.h>
-class IOContext{
-    std::shared_ptr<DispatcherBase> dispatcher_;
-public:
-    IOContext();
-    void add(Event e);
-    void run();
-};
+namespace HTTP{
+    class IOContext{
+        std::shared_ptr<DispatcherBase> dispatcher_;
+    public:
+        IOContext();
+        void add(Event e);
+        void run();
+    };
+}
+
 #endif /* IOContext_hpp */

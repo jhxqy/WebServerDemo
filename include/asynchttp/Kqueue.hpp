@@ -11,16 +11,19 @@
 
 #include <stdio.h>
 #include "Dispatcher.hpp"
-class KqueueDispatcher:public DispatcherBase{
-    int kd_;
-    std::list<Event> events_;
-    int eventn_;
-public:
-    KqueueDispatcher();
-    virtual void add(Event e) override;
-    virtual void remove(Event e) override;
-    virtual int dispatch(struct timespec *) override;
-    virtual ~KqueueDispatcher();
-};
+namespace HTTP{
+    class KqueueDispatcher:public DispatcherBase{
+        int kd_;
+        std::list<Event> events_;
+        int eventn_;
+    public:
+        KqueueDispatcher();
+        virtual void add(Event e) override;
+        virtual void remove(Event e) override;
+        virtual int dispatch(struct timespec *) override;
+        virtual ~KqueueDispatcher();
+    };
+}
+
 
 #endif /* Kqueue_hpp */

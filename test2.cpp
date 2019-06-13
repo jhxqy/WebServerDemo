@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "asynchttp/HTTP.hpp"
 using namespace std;
-
+using namespace HTTP;
 int main(){
     IOContext ctx;
     Serv s(ctx,"8088");
