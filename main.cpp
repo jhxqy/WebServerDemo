@@ -7,14 +7,58 @@
 //
 
 #include <iostream>
-#include "Async.hpp"
-#include "http_parser.h"
-#include "HttpDispatcher.hpp"
+#include "asynchttp/HTTP.hpp"
+#include <cstdlib>
+#include <unordered_map>
+
+using namespace HTTP;
 using namespace std;
+class Random{
+public:
+    Random(){
+        srand(time(nullptr));
+    }
+};
+int createRand(){
+    static Random r;
+    return rand();
+}
+
+
 int main(){
-    ResponseBody r;
-    r.status=200;
-    r.otherHeaders_["Content-Type"]="text/html";
-    r.out("helloworld%d",100);
-    cout<<r.getPacket()<<endl;
+    IOContext ctx;
+    Serv s(ctx,"8088");
+    HttpDispatcher *http=HttpDispatcherImpl::Create();
+    std::unordered_map<string,int> m;
+    http->Register("/count", [&m](RequestBody &request,ResponseBody&response){
+        
+        if (m.count(request.cookies_["SESSION"])==0) {
+            cout<<"Session不存在 创建新SESSION"<<endl;
+            string newSession=to_string(createRand());
+            request.cookies_.insert(make_pair("SESSION",newSession));
+        }
+        response.cookies_.insert(make_pair("SESSION", request.cookies_["SESSION"]));
+        response.out("这是您的第%d次访问！",m[request.cookies_["SESSION"]]);
+//        printf("这是您的第%d次访问！\n",m[request.cookies_["SESSION"]]);
+//        cout<<"request COOKIE:"<<endl;
+//        for(auto i:request.cookies_){
+//            cout<<" "<<i.first<<"="<<i.second<<endl;
+//        }
+//        cout<<endl;
+//        cout<<"response COOKIE:"<<endl;;
+//        for(auto i:response.cookies_){
+//            cout<<" "<<i.first<<"="<<i.second<<endl;
+//        }
+//        cout<<endl;
+//        cout<<"session map:"<<endl;;
+//        for(auto i:m){
+//            cout<<" "<<i.first<<"="<<i.second<<endl;
+//        }
+//        cout<<endl;
+        
+        m[request.cookies_["SESSION"]]=m[request.cookies_["SESSION"]]+1;
+        
+    });
+    ctx.run();
+
 }

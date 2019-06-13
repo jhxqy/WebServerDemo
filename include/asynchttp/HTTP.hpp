@@ -57,7 +57,7 @@ namespace HTTP {
             settings.on_status=std::bind(&Session::onstatus,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
         }
         ~Session(){
-            std::cout<<"链接已断开"<<std::endl;
+        //    std::cout<<"链接已断开"<<std::endl;
             close(descriptor_.NativeFd());
         }
     };
@@ -68,7 +68,7 @@ namespace HTTP {
         void listen(){
             a.AsyncWaitAccept([this](int fd){
                 int socket= accept(fd, nullptr, nullptr);
-                std::cout<<"有用户进入了"<<std::endl;
+            //    std::cout<<"有用户进入了"<<std::endl;
                 std::make_shared<Session>(ctx_,socket)->run();
                 this->listen();
             });

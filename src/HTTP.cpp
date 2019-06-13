@@ -26,7 +26,7 @@ namespace HTTP {
                 if(hasParsered!=hasRead){
                     doRead();
                 }else{
-                    std::cout<<requestbody_.nativeURL_<<std::endl;
+            //        std::cout<<requestbody_.nativeURL_<<std::endl;
                     doWrite();
                 }
             }

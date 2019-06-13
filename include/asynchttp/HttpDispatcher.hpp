@@ -10,7 +10,7 @@
 #define HttpDispatcher_hpp
 
 #include <stdio.h>
-#include <map>
+#include <unordered_map>
 #include <list>
 #include <unordered_map>
 #include <string>
@@ -25,8 +25,8 @@ namespace HTTP {
     struct RequestBody{
         std::string nativeURL_;
         std::string url_;
-        std::map<std::string,std::string> cookies_;
-        std::map<std::string,std::string> headers_;
+        std::unordered_map<std::string,std::string> cookies_;
+        std::unordered_map<std::string,std::string> headers_;
         bool isFile;
         std::string suffix;
         std::string parameters;
@@ -40,8 +40,8 @@ namespace HTTP {
     
     struct ResponseBody{
         int status;
-        std::map<std::string,std::string> cookies_;
-        std::map<std::string,std::string> otherHeaders_;
+        std::unordered_map<std::string,std::string> cookies_;
+        std::unordered_map<std::string,std::string> otherHeaders_;
         std::string body_;
         std::string packet_;
         std::string getPacket();
