@@ -134,6 +134,10 @@ ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request,ResponseBody &res
     if(doFilter(request.url_, request, response)==1){
         return response;
     }
+    
+    for(auto &c:request.cookies_){
+        response.cookies_.insert(c);
+    }
     if(request.isFile==false){
         if (map_.count(request.url_)==1) {
             map_[request.url_](request,response);
