@@ -11,10 +11,13 @@
 
 #include <stdio.h>
 #include <map>
+#include <list>
 #include <unordered_map>
 #include <string>
 #include "Content-Type-Acquisitor.hpp"
 #include <functional>
+#define FILTER_NEXT 1
+#define FILTER_END  2
 class HttpDispatcher;
 struct RequestBody{
     std::string nativeURL_;
@@ -55,12 +58,17 @@ struct ResponseBody{
         otherHeaders_["Content-Type"]="text/html;charset=utf-8";
     }
     void forward(RequestBody &request,const std::string &url);
+    
+    
 };
 
 
 class HttpDispatcher{
 public:
     using CallBackType=std::function<void(RequestBody&,ResponseBody&)>;
+    
+    using FilterType=std::function<int(RequestBody&,ResponseBody&)>;
+    virtual void RegisterFilter(const std::string& url,FilterType)=0;
     virtual int Register(const std::string& url,CallBackType )=0;
     virtual ResponseBody dispatch(RequestBody &request,ResponseBody &response)=0;
     virtual void SetDefaultPath(const std::string &url)=0;
@@ -72,12 +80,14 @@ class HttpDispatcherImpl:public HttpDispatcher{
     HttpDispatcherImpl(){
         
     }
+    std::unordered_map<std::string, std::list<FilterType>> filterChain_;
     std::unordered_map<std::string, CallBackType> map_;
     std::string defaultPath_;
-    void fromPath(RequestBody &request,ResponseBody &response);
     std::unordered_map<std::string, std::string> contentTypeTable_;
     ContentTypeAscquisitor cta_;
+    void fromPath(RequestBody &request,ResponseBody &response);
     void parserUrl(RequestBody &request);
+    int doFilter(const std::string& url,RequestBody &request,ResponseBody &response);
 public:
     static HttpDispatcherImpl* Create(){
         static HttpDispatcherImpl *Singleton=nullptr;
@@ -86,6 +96,7 @@ public:
         }
         return Singleton;
     }
+    void RegisterFilter(const std::string& url,FilterType) override;
     void SetDefaultPath(const std::string&url) override;
     ResponseBody dispatch(RequestBody &request,ResponseBody &response) override;
     int Register(const std::string &url,CallBackType) override;

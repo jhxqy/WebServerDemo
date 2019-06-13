@@ -123,7 +123,7 @@ void HttpDispatcherImpl::parserUrl(RequestBody &request){
     }
     
     if (posP!=length) {
-        request.parameters=std::string(&at[posP+1],length-posP);
+        request.parameters=std::string(&at[posP+1],length-posP-1);
     }
 }
 
@@ -131,9 +131,11 @@ void HttpDispatcherImpl::parserUrl(RequestBody &request){
 ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request,ResponseBody &response){
    // ResponseBody response(*this);
     parserUrl(request);
+    if(doFilter(request.url_, request, response)==1){
+        return response;
+    }
     if(request.isFile==false){
         if (map_.count(request.url_)==1) {
-//            response.otherHeaders_["Content-Type"]="text/html;charset=utf-8";
             map_[request.url_](request,response);
             return response;
         }else{
@@ -150,8 +152,6 @@ ResponseBody HttpDispatcherImpl::dispatch(RequestBody &request,ResponseBody &res
 void HttpDispatcherImpl::SetDefaultPath(const std::string &url){
     this->defaultPath_=url;
 }
-
-
 
 void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     //如果没有设置默认目录，则直接返回空文件
@@ -172,8 +172,22 @@ void HttpDispatcherImpl::fromPath(RequestBody &request,ResponseBody &response){
     }
     response.body_=std::string(std::istreambuf_iterator<char>(in),std::istreambuf_iterator<char>());
     return;
-    
-    
-    
-    
+}
+
+
+
+void HttpDispatcherImpl::RegisterFilter(const std::string &url, FilterType func){
+    filterChain_[url].push_back(func);
+}
+
+int HttpDispatcherImpl::doFilter(const std::string  &url,RequestBody &request,ResponseBody &response){
+    auto filters=filterChain_[url];
+    for(auto &i:filters){
+        if (i(request,response)==FILTER_NEXT){
+            continue;
+        }else{
+            return 1;// 返回1代表直接终止
+        }
+    }
+    return 0; //返回0代表继续执行函数
 }

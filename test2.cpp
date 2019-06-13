@@ -44,5 +44,19 @@ int main(){
         res.out("这是跳转前第一个接口<br>");
         res.forward(req,"/world");
     });
+    http->RegisterFilter("/hello", [](RequestBody &request,ResponseBody &response){
+        cout<<"调用第一个过滤器！"<<endl;
+        return FILTER_NEXT;
+    });
+    http->RegisterFilter("/index.html", [](RequestBody &request,ResponseBody &response){
+        if (request.parameters.compare("hello")!=0) {
+            cout<<request.parameters<<endl;
+            response.forward(request, "/hello");
+            return FILTER_END;
+        }
+        cout<<"NICE!"<<endl;
+        return FILTER_NEXT;
+    });
+    
     ctx.run();
 }
