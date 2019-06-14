@@ -9,7 +9,24 @@
 #include "HTTP.hpp"
 
 namespace HTTP {
-    
+    std::unordered_map<std::string,std::string> parserParam(std::string s,char p1,char p2){ //p1为大分隔符，p2为小分隔符
+        size_t lastfen=0;
+        std::unordered_map<std::string,std::string> res;
+        std::string &a=s;
+        for (size_t i=0; i<=a.size();i++) {
+            if (i==(a.size())||a[i]==p1) {
+                for(size_t j=lastfen;j<i;j++){
+                    if (a[j]==p2) {
+                        res.insert(std::make_pair(std::string(&a[lastfen],j-lastfen), std::string(&a[j+1],i-j-1)));
+                        lastfen=i+1;
+                        break;
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
     void Session::doRead(){
         auto self=shared_from_this();
         descriptor_.AsyncWaitRead([this,self](int fd){
@@ -73,19 +90,8 @@ namespace HTTP {
     int Session::onheaders_value(http_parser *, const char *at, size_t length){
         tempHeader.second=std::string(at,length);
         if (tempHeader.first.compare("Cookie")==0) {
-            size_t lastfen=0;
-            std::string &a=tempHeader.second;
-            for (size_t i=0; i<=a.size();i++) {
-                if (i==(a.size())||a[i]==';') {
-                    for(size_t j=lastfen;j<i;j++){
-                        if (a[j]=='=') {
-                            requestbody_.cookies_.insert(std::make_pair(std::string(&a[lastfen],j-lastfen), std::string(&a[j+1],i-j-1)));
-                            lastfen=i+1;
-                            break;
-                        }
-                    }
-                }
-            }
+            requestbody_.cookies_=parserParam(tempHeader.second, ';', '=');
+//           
         }else{
             requestbody_.headers_.insert(tempHeader);
             

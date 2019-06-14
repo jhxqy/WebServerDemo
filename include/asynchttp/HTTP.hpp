@@ -22,6 +22,9 @@
 #include <map>
 
 namespace HTTP {
+    std::unordered_map<std::string,std::string> parserParam(std::string s,char p1,char p2); 
+    
+    
     class Session:public std::enable_shared_from_this<Session>{
         IOContext &ctx_;
         Descriptor descriptor_;
@@ -58,7 +61,7 @@ namespace HTTP {
         }
         ~Session(){
         //    std::cout<<"链接已断开"<<std::endl;
-            close(descriptor_.NativeFd());
+            shutdown(descriptor_.NativeFd(),SHUT_WR);
         }
     };
     
